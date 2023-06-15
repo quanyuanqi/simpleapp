@@ -5,17 +5,19 @@
 
 
 # DB
+
 import streamlit as st
 import sqlite3
 conn = sqlite3.connect('data.db')
 c = conn.cursor()
 
 # Functions
-def create_table():
-	c.execute('CREATE TABLE IF NOT EXISTS blogtable(author TEXT,title TEXT,article TEXT,postdate DATE)')
 
-def add_data(author,title,article,postdate):
-	c.execute('INSERT INTO blogtable(author,title,article,postdate) VALUES (?,?,?,?)',(author,title,article,postdate))
+def create_table():
+	c.execute('CREATE TABLE IF NOT EXISTS blogtable(author TEXT,title TEXT,link TEXT,postdate DATE)')
+
+def add_data(author,title,link,postdate):
+	c.execute('INSERT INTO blogtable(author,title,link,postdate) VALUES (?,?,?,?)',(author,title,link,postdate))
 	conn.commit()
 
 def view_all_notes():
@@ -49,20 +51,18 @@ def delete_data(title):
 # Layout Templates
 html_temp = """
 <div style="background-color:{};padding:10px;border-radius:10px">
-<h1 style="color:{};text-align:center;">Simple Blog </h1>
+<h1 style="color:{};text-align:center;">西墙网科技头条</h1>
 </div>
 """
 title_temp ="""
-<div style="background-color:#464e5f;padding:10px;border-radius:10px;margin:10px;">
-<h4 style="color:white;text-align:center;">{}</h1>
-<img src="https://www.w3schools.com/howto/img_avatar.png" alt="Avatar" style="vertical-align: middle;float:left;width: 50px;height: 50px;border-radius: 50%;" >
+<div style="background-color:#ffffff;padding:10px;border-radius:10px;margin:10px;">
+<h4 style="color:black;text-align:left;">{}</h4>
 <h6>Author:{}</h6>
 <br/>
-<br/> 
 <p style="text-align:justify">{}</p>
 </div>
 """
-article_temp ="""
+link_temp ="""
 <div style="background-color:#464e5f;padding:10px;border-radius:5px;margin:10px;">
 <h4 style="color:white;text-align:center;">{}</h1>
 <h6>Author:{}</h6> 
@@ -103,12 +103,14 @@ def main():
 		st.subheader("Home")
 		result = view_all_notes()
 		
+		
 		for i in result:
 			b_author = i[0]
 			b_title = i[1]
-			b_article = str(i[2])[0:30]
+			b_link = str(i[2])
 			b_post_date = i[3]
-			st.markdown(title_temp.format(b_title,b_author,b_article,b_post_date),unsafe_allow_html=True)
+			alink = f'<a target="_blank" href="{b_link}">{b_title}</a>'
+			st.markdown(title_temp.format(b_title,b_author,alink,b_post_date),unsafe_allow_html=True)
 
 	elif choice == "View Posts":
 		st.subheader("View Articles")
@@ -118,10 +120,10 @@ def main():
 		for i in post_result:
 			b_author = i[0]
 			b_title = i[1]
-			b_article = i[2]
+			b_link = i[2]
 			b_post_date = i[3]
 			st.markdown(head_message_temp.format(b_title,b_author,b_post_date),unsafe_allow_html=True)
-			st.markdown(full_message_temp.format(b_article),unsafe_allow_html=True)
+			st.markdown(full_message_temp.format(b_link),unsafe_allow_html=True)
 
 
 
@@ -130,10 +132,10 @@ def main():
 		create_table()
 		blog_author = st.text_input("Enter Author Name",max_chars=50)
 		blog_title = st.text_input("Enter Post Title")
-		blog_article = st.text_area("Post Article Here",height=200)
+		blog_link = st.text_area("Post link Here",height=200)
 		blog_post_date = st.date_input("Date")
 		if st.button("Add"):
-			add_data(blog_author,blog_title,blog_article,blog_post_date)
+			add_data(blog_author,blog_title,blog_link,blog_post_date)
 			st.success("Post:{} saved".format(blog_title))	
 
 
@@ -147,19 +149,19 @@ def main():
 		if st.button("Search"):
 
 			if search_choice == "title":
-				article_result = get_blog_by_title(search_term)
+				link_result = get_blog_by_title(search_term)
 			elif search_choice == "author":
-				article_result = get_blog_by_author(search_term)
+				link_result = get_blog_by_author(search_term)
 
 
-			for i in article_result:
+			for i in link_result:
 				b_author = i[0]
 				b_title = i[1]
-				b_article = i[2]
+				b_link = i[2]
 				b_post_date = i[3]
-				st.text("Reading Time:{}".format(readingTime(b_article)))
+				st.text("Reading Time:{}".format(readingTime(b_link)))
 				st.markdown(head_message_temp.format(b_title,b_author,b_post_date),unsafe_allow_html=True)
-				st.markdown(full_message_temp.format(b_article),unsafe_allow_html=True)
+				st.markdown(full_message_temp.format(b_link),unsafe_allow_html=True)
 
 
 
@@ -168,7 +170,7 @@ def main():
 		st.subheader("Manage Articles")
 
 		result = view_all_notes()
-		clean_db = pd.DataFrame(result,columns=["Author","Title","Articles","Post Date"])
+		clean_db = pd.DataFrame(result,columns=["Author","Title","Links","Post Date"])
 		st.dataframe(clean_db)
 
 		unique_titles = [i[0] for i in view_all_titles()]
@@ -177,38 +179,6 @@ def main():
 		if st.button("Delete"):
 			delete_data(delete_blog_by_title)
 			st.warning("Deleted: '{}'".format(delete_blog_by_title))
-
-
-		if st.checkbox("Metrics"):
-			
-			new_df['Length'] = new_df['Articles'].str.len()
-			st.dataframe(new_df)
-
-
-			st.subheader("Author Stats")
-			new_df["Author"].value_counts().plot(kind='bar')
-			st.pyplot()
-
-			st.subheader("Author Stats")
-			new_df['Author'].value_counts().plot.pie(autopct="%1.1f%%")
-			st.pyplot()
-
-		if st.checkbox("Word Cloud"):
-			st.subheader("Generate Word Cloud")
-			# text = new_df['Articles'].iloc[0]
-			text = ','.join(new_df['Articles'])
-			wordcloud = WordCloud().generate(text)
-			plt.imshow(wordcloud,interpolation='bilinear')
-			plt.axis("off")
-			st.pyplot()
-
-		if st.checkbox("BarH Plot"):
-			st.subheader("Length of Articles")
-			new_df = clean_db
-			new_df['Length'] = new_df['Articles'].str.len()
-			barh_plot = new_df.plot.barh(x='Author',y='Length',figsize=(20,10))
-			st.pyplot()
-
 
 if __name__ == '__main__':
 	main()
