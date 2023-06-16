@@ -8,6 +8,8 @@
 
 import streamlit as st
 import sqlite3
+import pandas as pd
+
 conn = sqlite3.connect('data.db')
 c = conn.cursor()
 
@@ -21,7 +23,7 @@ def add_data(author,title,link,postdate):
 	conn.commit()
 
 def view_all_notes():
-	c.execute('SELECT * FROM blogtable')
+	c.execute('SELECT * FROM blogtable ORDER by postdate desc')
 	data = c.fetchall()
 	return data
 
@@ -30,11 +32,11 @@ def view_all_titles():
 	data = c.fetchall()
 	return data
 
-
 def get_blog_by_title(title):
 	c.execute('SELECT * FROM blogtable WHERE title="{}"'.format(title))
 	data = c.fetchall()
 	return data
+
 def get_blog_by_author(author):
 	c.execute('SELECT * FROM blogtable WHERE author="{}"'.format(author))
 	data = c.fetchall()
@@ -55,11 +57,8 @@ html_temp = """
 </div>
 """
 title_temp ="""
-<div style="background-color:#ffffff;padding:10px;border-radius:10px;margin:10px;">
-<h4 style="color:black;text-align:left;">{}</h4>
-<h6>Author:{}</h6>
-<br/>
-<p style="text-align:justify">{}</p>
+<div style="background-color:#ffffff;padding:0px;border-radius:0px;margin:0px;">
+<p style="text-align:left">{} by {} {}</p>
 </div>
 """
 link_temp ="""
@@ -96,13 +95,12 @@ def main():
 	
 	st.markdown(html_temp.format('royalblue','white'),unsafe_allow_html=True)
 
-	menu = ["Home","View Posts","Add Posts","Search","Manage Blog"]
+	menu = ["Home","Share Your Link","Search","Manage Blog"]
 	choice = st.sidebar.selectbox("Menu",menu)
 
 	if choice == "Home":
 		st.subheader("Home")
 		result = view_all_notes()
-		
 		
 		for i in result:
 			b_author = i[0]
@@ -110,39 +108,21 @@ def main():
 			b_link = str(i[2])
 			b_post_date = i[3]
 			alink = f'<a target="_blank" href="{b_link}">{b_title}</a>'
-			st.markdown(title_temp.format(b_title,b_author,alink,b_post_date),unsafe_allow_html=True)
+			st.markdown(title_temp.format(alink,b_author,b_post_date),unsafe_allow_html=True)
 
-	elif choice == "View Posts":
-		st.subheader("View Articles")
-		all_titles = [i[0] for i in view_all_titles()]
-		postlist = st.sidebar.selectbox("View Posts",all_titles)
-		post_result = get_blog_by_title(postlist)
-		for i in post_result:
-			b_author = i[0]
-			b_title = i[1]
-			b_link = i[2]
-			b_post_date = i[3]
-			st.markdown(head_message_temp.format(b_title,b_author,b_post_date),unsafe_allow_html=True)
-			st.markdown(full_message_temp.format(b_link),unsafe_allow_html=True)
-
-
-
-	elif choice == "Add Posts":
-		st.subheader("Add Articles")
+	elif choice == "Share Your Link":
+		st.subheader("Add Your Link")
 		create_table()
-		blog_author = st.text_input("Enter Author Name",max_chars=50)
-		blog_title = st.text_input("Enter Post Title")
-		blog_link = st.text_area("Post link Here",height=200)
+		blog_author = st.text_input("Enter Your Name",max_chars=10)
+		blog_title = st.text_input("Enter a Title")
+		blog_link = st.text_area("Enter http or https Link Here",height=200)
 		blog_post_date = st.date_input("Date")
 		if st.button("Add"):
 			add_data(blog_author,blog_title,blog_link,blog_post_date)
-			st.success("Post:{} saved".format(blog_title))	
-
-
-
+			st.success("Link:{} saved".format(blog_title))	
 
 	elif choice == "Search":
-		st.subheader("Search Articles")
+		st.subheader("Search links")
 		search_term = st.text_input('Enter Search Term')
 		search_choice = st.radio("Field to Search By",("title","author"))
 		
@@ -153,7 +133,6 @@ def main():
 			elif search_choice == "author":
 				link_result = get_blog_by_author(search_term)
 
-
 			for i in link_result:
 				b_author = i[0]
 				b_title = i[1]
@@ -163,11 +142,8 @@ def main():
 				st.markdown(head_message_temp.format(b_title,b_author,b_post_date),unsafe_allow_html=True)
 				st.markdown(full_message_temp.format(b_link),unsafe_allow_html=True)
 
-
-
-
 	elif choice == "Manage Blog":
-		st.subheader("Manage Articles")
+		st.subheader("Manage links")
 
 		result = view_all_notes()
 		clean_db = pd.DataFrame(result,columns=["Author","Title","Links","Post Date"])
