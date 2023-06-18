@@ -1,2 +1,2 @@
-# simpleapp
-a simple web app based on Streamlit and the codes are originated by JCharis.
+# simple web app is reddit styled or digg styled or hacker news styled 
+The simple web app, based on Streamlit, is inspired by the codes on JCharis' blog.
