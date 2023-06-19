@@ -165,7 +165,8 @@ def main():
 				if task == "Add Post":
 					st.subheader("Add Your Link")
 					create_table()
-					blog_username = st.text_input("Enter Your Name",max_chars=10)
+					#blog_username = st.text_input("Enter Your Name",max_chars=10)
+					blog_username = st.write("by "+username)
 					blog_title = st.text_input("Enter a Title")
 					blog_link = st.text_area("Enter http or https Link Here",height=200)
 					blog_post_date = st.date_input("Date")
@@ -211,3 +212,4 @@ def main():
 
 if __name__ == '__main__':
 	main()
+
