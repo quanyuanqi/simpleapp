@@ -165,13 +165,11 @@ def main():
 				if task == "Add Post":
 					st.subheader("Add Your Link")
 					create_table()
-					#blog_username = st.text_input("Enter Your Name",max_chars=10)
-					blog_username = st.write("by "+username)
 					blog_title = st.text_input("Enter a Title")
 					blog_link = st.text_area("Enter http or https Link Here",height=200)
 					blog_post_date = st.date_input("Date")
 					if st.button("Add"):
-						add_data(blog_username,blog_title,blog_link,blog_post_date)
+						add_data(username,blog_title,blog_link,blog_post_date)
 						st.success("Link:{} saved".format(blog_title))
 
 				elif task == "Manage Links":
@@ -212,4 +210,3 @@ def main():
 
 if __name__ == '__main__':
 	main()
-
